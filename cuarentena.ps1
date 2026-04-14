@@ -28,6 +28,9 @@ $fechaBusqueda = (Get-Date).AddDays(-21)    # Fecha para auditar archivos
 $fechaBorrado = (Get-Date).AddDays(-30)     # Fecha para eliminar archivos de la cuarentena
 $idAplicacion = "*****-****-****-****"      # ID de la app para la conexión a sharepoint
 
+# Umbral de tamaño (9 MB)
+$tamanoMaximoBytes = 9MB
+
 # Lista de sitios de SharePoint
 $listaSites = @(
     "https://contoso.sharepoint.com/sites/PNBSENCURSO",
@@ -46,6 +49,10 @@ $carpetasExcluidas = @(
 )
 
 $LogPath = "C:\cuarentenaSharepoint_Log.txt"
+$logDirectory = Split-Path -Path $LogPath -Parent
+if (-not [string]::IsNullOrWhiteSpace($logDirectory) -and -not (Test-Path -Path $logDirectory)) {
+    New-Item -ItemType Directory -Path $logDirectory -Force | Out-Null
+}
 
 # --- Funciones Auxiliares ---
 
@@ -188,7 +195,7 @@ foreach ($siteUrl in $listaSites) {
                 continue
             }
 
-            if ($fileSizeKB -gt 9216 -and $fileCreationDate -ge $fechaBusqueda) {
+            if ($fileSizeKB -gt $tamanoMaximoBytes -and $fileCreationDate -ge $fechaBusqueda) {
                 
                 $autorObj = $item["Author"]
                 $autorEmail = $autorObj.Email
